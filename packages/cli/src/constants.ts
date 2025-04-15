@@ -27,6 +27,7 @@ export const STARTING_NODES = [
 	'@n8n/n8n-nodes-langchain.manualChatTrigger',
 	'n8n-nodes-base.start',
 	'n8n-nodes-base.manualTrigger',
+	'n8n-nodes-base.evaluationTrigger',
 ];
 
 export const MCP_TRIGGER_NODE_TYPE = '@n8n/n8n-nodes-langchain.mcpTrigger';
