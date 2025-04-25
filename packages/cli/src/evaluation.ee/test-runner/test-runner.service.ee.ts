@@ -13,7 +13,11 @@ import assert from 'node:assert';
 
 import { ActiveExecutions } from '@/active-executions';
 import config from '@/config';
-import { EVALUATION_DATASET_TRIGGER_NODE, EVALUATION_METRICS_NODE } from '@/constants';
+import {
+	DUMMY_DATASET_TRIGGER_NODE,
+	EVALUATION_DATASET_TRIGGER_NODE,
+	EVALUATION_METRICS_NODE,
+} from '@/constants';
 import type { TestRun } from '@/databases/entities/test-run.ee';
 import type { User } from '@/databases/entities/user';
 import { TestCaseExecutionRepository } from '@/databases/repositories/test-case-execution.repository.ee';
@@ -65,7 +69,8 @@ export class TestRunnerService {
 	 */
 	private findTriggerNode(workflow: IWorkflowBase) {
 		const triggerNode = workflow.nodes.find(
-			(node) => node.type === EVALUATION_DATASET_TRIGGER_NODE,
+			(node) =>
+				node.type === DUMMY_DATASET_TRIGGER_NODE || node.type === EVALUATION_DATASET_TRIGGER_NODE,
 		);
 
 		if (!triggerNode) {

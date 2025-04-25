@@ -92,11 +92,36 @@ export class EvaluationTrigger implements INodeType {
 
 	async execute(this: IExecuteFunctions) {
 		const inputData = this.getInputData();
-		const shouldStop = inputData.find((item) => item.json.stop);
 
-		if (shouldStop) {
-			return [];
+		if (inputData[0].json.requestDataset) {
+			const googleSheetInstance = getGoogleSheet.call(this);
+
+			const googleSheet = await getSheet.call(this, googleSheetInstance);
+
+			let operationResult: INodeExecutionData[] = [];
+
+			const startingRow = 1;
+			const endingRow = 5;
+
+			operationResult = await getResults.call(
+				this,
+				operationResult,
+				startingRow,
+				endingRow,
+				googleSheetInstance,
+				googleSheet,
+			);
+
+			return [operationResult];
 		}
+
+		return [];
+
+		// const shouldStop = inputData.find((item) => item.json.stop);
+
+		// if (shouldStop) {
+		// 	return [];
+		// }
 
 		// loop
 		// for (let i = 0; i < 5; i++) {
@@ -172,24 +197,5 @@ export class EvaluationTrigger implements INodeType {
 		// }
 
 		// gsheets
-		const googleSheetInstance = getGoogleSheet.call(this);
-
-		const googleSheet = await getSheet.call(this, googleSheetInstance);
-
-		let operationResult: INodeExecutionData[] = [];
-
-		const startingRow = 20;
-		const endingRow = 25;
-
-		operationResult = await getResults.call(
-			this,
-			operationResult,
-			startingRow,
-			endingRow,
-			googleSheetInstance,
-			googleSheet,
-		);
-
-		return [operationResult];
 	}
 }
