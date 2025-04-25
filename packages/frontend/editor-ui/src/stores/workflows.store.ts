@@ -1609,6 +1609,29 @@ export const useWorkflowsStore = defineStore(STORES.WORKFLOWS, () => {
 		}
 	}
 
+	async function runWorkflowDataset(startRunData: IStartRunData): Promise<IExecutionPushResponse> {
+		if (startRunData.workflowData.settings === null) {
+			startRunData.workflowData.settings = undefined;
+		}
+
+		try {
+			return await makeRestApiRequest(
+				rootStore.restApiContext,
+				'POST',
+				`/workflows/${startRunData.workflowData.id}/runDataset?partialExecutionVersion=${version.value}`,
+				startRunData as unknown as IDataObject,
+			);
+		} catch (error) {
+			if (error.response?.status === 413) {
+				throw new ResponseError(i18n.baseText('workflowRun.showError.payloadTooLarge'), {
+					errorCode: 413,
+					httpStatusCode: 413,
+				});
+			}
+			throw error;
+		}
+	}
+
 	async function removeTestWebhook(targetWorkflowId: string): Promise<boolean> {
 		return await makeRestApiRequest(
 			rootStore.restApiContext,
@@ -1862,6 +1885,7 @@ export const useWorkflowsStore = defineStore(STORES.WORKFLOWS, () => {
 		getExecution,
 		createNewWorkflow,
 		updateWorkflow,
+		runWorkflowDataset,
 		runWorkflow,
 		removeTestWebhook,
 		fetchExecutionDataById,

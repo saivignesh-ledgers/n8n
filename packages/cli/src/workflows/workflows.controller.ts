@@ -428,6 +428,40 @@ export class WorkflowsController {
 		);
 	}
 
+	@Post('/:workflowId/runDataset')
+	@ProjectScope('workflow:execute')
+	async runDatasetManually(
+		req: WorkflowRequest.ManualRun,
+		_res: unknown,
+		@Query query: ManualRunQueryDto,
+	) {
+		if (!req.body.workflowData.id) {
+			throw new UnexpectedError('You cannot execute a workflow without an ID');
+		}
+
+		if (req.params.workflowId !== req.body.workflowData.id) {
+			throw new UnexpectedError('Workflow ID in body does not match workflow ID in URL');
+		}
+
+		if (this.license.isSharingEnabled()) {
+			const workflow = this.workflowRepository.create(req.body.workflowData);
+
+			const safeWorkflow = await this.enterpriseWorkflowService.preventTampering(
+				workflow,
+				workflow.id,
+				req.user,
+			);
+			req.body.workflowData.nodes = safeWorkflow.nodes;
+		}
+
+		return await this.workflowExecutionService.executeDataset(
+			req.body,
+			req.user,
+			req.headers['push-ref'],
+			query.partialExecutionVersion,
+		);
+	}
+
 	@Licensed('feat:sharing')
 	@Put('/:workflowId/share')
 	@ProjectScope('workflow:share')

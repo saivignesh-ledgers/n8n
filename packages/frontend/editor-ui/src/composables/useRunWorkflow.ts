@@ -76,7 +76,15 @@ export function useRunWorkflow(useRunWorkflowOpts: { router: ReturnType<typeof u
 		let response: IExecutionPushResponse;
 
 		try {
-			response = await workflowsStore.runWorkflow(runData);
+			const evalTrigger = runData.workflowData.nodes.find(
+				(node: INode) => node.type === 'n8n-nodes-base.evaluationTrigger',
+			);
+
+			if (evalTrigger) {
+				response = await workflowsStore.runWorkflowDataset(runData);
+			} else {
+				response = await workflowsStore.runWorkflow(runData);
+			}
 		} catch (error) {
 			uiStore.removeActiveAction('workflowRunning');
 			throw error;
