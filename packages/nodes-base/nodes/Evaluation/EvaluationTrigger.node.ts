@@ -3,21 +3,17 @@ import type {
 	INodeTypeDescription,
 	IExecuteFunctions,
 	INodeExecutionData,
-	IDataObject,
 	IExecuteWorkflowInfo,
-	ExecuteWorkflowData,
 } from 'n8n-workflow';
 import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { loadOptions } from './methods';
+import { getGoogleSheet, getResults, getSheet } from './utils/evaluationTriggerUtils';
 import { document, sheet } from '../Google/Sheet/GoogleSheetsTrigger.node';
 import { readFilter } from '../Google/Sheet/v2/actions/sheet/read.operation';
-import { readSheet } from '../Google/Sheet/v2/actions/utils/readOperation';
 import { authentication } from '../Google/Sheet/v2/actions/versionDescription';
-import { GoogleSheet } from '../Google/Sheet/v2/helpers/GoogleSheet';
-import type { ResourceLocator } from '../Google/Sheet/v2/helpers/GoogleSheets.types';
-import { getSpreadsheetId } from '../Google/Sheet/v2/helpers/GoogleSheets.utils';
-import { getGoogleSheet, getResults, getSheet } from './utils/evaluationTriggerUtils';
+
+let startingRow = 2;
 
 export class EvaluationTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -91,111 +87,46 @@ export class EvaluationTrigger implements INodeType {
 	methods = { loadOptions };
 
 	async execute(this: IExecuteFunctions) {
-		const inputData = this.getInputData();
+		const workflowId = this.getWorkflow().id;
 
-		if (inputData[0].json.requestDataset) {
-			const googleSheetInstance = getGoogleSheet.call(this);
+		const workflowInfo: IExecuteWorkflowInfo = {};
+		workflowInfo.id = workflowId as string;
 
-			const googleSheet = await getSheet.call(this, googleSheetInstance);
+		const maxRows = this.getNodeParameter('limitRows', 0)
+			? parseInt(this.getNodeParameter('maxRows', 0) as string)
+			: 1000;
+		const endingRow = startingRow + maxRows;
 
-			let operationResult: INodeExecutionData[] = [];
+		const rangeOptions = {
+			rangeDefinition: 'specifyRange',
+			headerRow: 1,
+			firstDataRow: startingRow,
+		};
 
-			const startingRow = 1;
-			const endingRow = 5;
+		const googleSheetInstance = getGoogleSheet.call(this);
 
-			operationResult = await getResults.call(
-				this,
-				operationResult,
-				startingRow,
-				endingRow,
-				googleSheetInstance,
-				googleSheet,
-			);
+		const googleSheet = await getSheet.call(this, googleSheetInstance);
 
-			return [operationResult];
+		let operationResult: INodeExecutionData[] = [];
+
+		operationResult = await getResults.call(
+			this,
+			operationResult,
+			1,
+			endingRow,
+			googleSheetInstance,
+			googleSheet,
+			rangeOptions,
+		);
+
+		if (operationResult.length === 0) {
+			startingRow = 1;
+			return [];
 		}
 
-		return [];
+		startingRow = endingRow + 1;
 
-		// const shouldStop = inputData.find((item) => item.json.stop);
-
-		// if (shouldStop) {
-		// 	return [];
-		// }
-
-		// loop
-		// for (let i = 0; i < 5; i++) {
-		// 	// const inputData = this.getInputData();
-		// 	const workflowId = this.getWorkflow().id;
-		// 	const workflowProxy = this.getWorkflowDataProxy(0);
-
-		// 	const workflowInfo: IExecuteWorkflowInfo = {};
-		// 	workflowInfo.id = workflowId as string;
-		// 	if (inputData[0].json.a === 1) {
-		// 		return [];
-		// 	} else {
-		// 		const googleSheetInstance = getGoogleSheet.call(this);
-
-		// 		const googleSheet = await getSheet.call(this, googleSheetInstance);
-
-		// 		let operationResult: INodeExecutionData[] = [];
-
-		// 		const startingRow = 1;
-		// 		const endingRow = 4;
-
-		// 		operationResult = await getResults.call(
-		// 			this,
-		// 			operationResult,
-		// 			startingRow,
-		// 			endingRow,
-		// 			googleSheetInstance,
-		// 			googleSheet,
-		// 		);
-
-		// 		const executionResult: ExecuteWorkflowData = await this.executeWorkflow(
-		// 			workflowInfo,
-		// 			[
-		// 				{
-		// 					index: 0,
-		// 					json: { a: 1 },
-		// 				},
-		// 			],
-		// 			undefined,
-		// 			{
-		// 				parentExecution: {
-		// 					executionId: workflowProxy.$execution.id,
-		// 					workflowId: workflowProxy.$workflow.id,
-		// 				},
-		// 			},
-		// 		);
-
-		// 		return [operationResult];
-		// 	}
-
-		// 	// const workflowId = this.getWorkflow().id;
-		// 	// const workflowProxy = this.getWorkflowDataProxy(0);
-
-		// 	// const workflowInfo: IExecuteWorkflowInfo = {};
-		// 	// workflowInfo.id = workflowId as string;
-
-		// 	// const executionResult: ExecuteWorkflowData = await this.executeWorkflow(
-		// 	// 	workflowInfo,
-		// 	// 	[
-		// 	// 		{
-		// 	// 			index: 0,
-		// 	// 			json: { a: 1 },
-		// 	// 		},
-		// 	// 	],
-		// 	// 	undefined,
-		// 	// 	{
-		// 	// 		parentExecution: {
-		// 	// 			executionId: workflowProxy.$execution.id,
-		// 	// 			workflowId: workflowProxy.$workflow.id,
-		// 	// 		},
-		// 	// 	},
-		// 	// );
-		// }
-
-		// gsheets
+		return [operationResult];
+		// TODO: Add hasLeft
 	}
 }

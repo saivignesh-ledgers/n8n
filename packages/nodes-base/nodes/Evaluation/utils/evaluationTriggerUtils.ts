@@ -7,7 +7,7 @@ import { getSpreadsheetId } from '../../Google/Sheet/v2/helpers/GoogleSheets.uti
 
 export async function getSheet(
 	this: IExecuteFunctions,
-	googleSheet: any,
+	googleSheet: GoogleSheet,
 ): Promise<{
 	title: string;
 	sheetId: number;
@@ -19,9 +19,7 @@ export async function getSheet(
 		mode: ResourceLocator;
 	};
 
-	const res = await googleSheet.spreadsheetGetSheet(this.getNode(), sheetMode, sheetWithinDocument);
-
-	return res;
+	return await googleSheet.spreadsheetGetSheet(this.getNode(), sheetMode, sheetWithinDocument);
 }
 
 export function getGoogleSheet(this: IExecuteFunctions) {
@@ -33,25 +31,6 @@ export function getGoogleSheet(this: IExecuteFunctions) {
 	return googleSheet;
 }
 
-export async function getEndingRow(this: IExecuteFunctions) {
-	return 4;
-}
-
-// export async function hasNextRow(sheetName: any, endingRow: number) {
-// 	const rangeString = `${sheetName}!${endingRow}:${endingRow + 1}`;
-
-// 	operationResult = await readSheet.call(
-// 		this,
-// 		googleSheet,
-// 		sheetName,
-// 		0,
-// 		operationResult,
-// 		5,
-// 		[],
-// 		rangeString,
-// 	);
-// }
-
 export async function getResults(
 	this: IExecuteFunctions,
 	operationResult: INodeExecutionData[],
@@ -59,13 +38,10 @@ export async function getResults(
 	endingRow: number,
 	googleSheet: GoogleSheet,
 	result: { title: string; sheetId: number },
+	rangeOptions: IDataObject,
 ): Promise<INodeExecutionData[]> {
-	const maxRows = this.getNodeParameter('limitRows', 0)
-		? (this.getNodeParameter('maxRows', 0) as string)
-		: undefined;
 	const sheetName = result.title;
 
-	// const rangeString = maxRows ? `${sheetName}!${startingRow}:${maxRows}` : `${sheetName}`;
 	const rangeString = `${sheetName}!${startingRow}:${endingRow}`;
 
 	operationResult = await readSheet.call(
@@ -74,9 +50,11 @@ export async function getResults(
 		sheetName,
 		0,
 		operationResult,
-		5,
+		this.getNode().typeVersion,
 		[],
 		rangeString,
+		true,
+		rangeOptions,
 	);
 
 	return operationResult;

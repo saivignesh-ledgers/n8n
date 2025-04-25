@@ -19,13 +19,16 @@ export async function readSheet(
 	items: INodeExecutionData[],
 	rangeString?: string,
 	structureColumns: boolean = true,
+	additionalOptions?: IDataObject,
 ): Promise<INodeExecutionData[]> {
 	const options = this.getNodeParameter('options', itemIndex, {});
 	const outputFormattingOption =
 		((options.outputFormatting as IDataObject)?.values as IDataObject) || {};
 
 	const dataLocationOnSheetOptions =
-		((options.dataLocationOnSheet as IDataObject)?.values as RangeDetectionOptions) || {};
+		((options.dataLocationOnSheet as IDataObject)?.values as RangeDetectionOptions) ||
+		additionalOptions ||
+		{};
 
 	if (dataLocationOnSheetOptions.rangeDefinition === undefined) {
 		dataLocationOnSheetOptions.rangeDefinition = 'detectAutomatically';
