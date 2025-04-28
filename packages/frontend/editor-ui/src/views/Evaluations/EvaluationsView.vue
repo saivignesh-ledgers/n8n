@@ -69,9 +69,13 @@ const isRunTestEnabled = computed(() => !isRunning.value);
 	<div v-if="!isLoading" :class="[$style.container]">
 		<div :class="$style.header">
 			<div style="display: flex; align-items: center">
-				<N8nText bold size="xlarge" color="text-dark"
-					>Evaluation runs for: {{ workflowName }}</N8nText
-				>
+				<N8nText bold size="xlarge" color="text-dark">{{
+					locale.baseText('evaluation.listRuns.runListHeader', {
+						interpolate: {
+							name: workflowName,
+						},
+					})
+				}}</N8nText>
 			</div>
 			<div style="display: flex; align-items: center; gap: 10px">
 				<N8nTooltip :disabled="isRunTestEnabled" :placement="'left'">
