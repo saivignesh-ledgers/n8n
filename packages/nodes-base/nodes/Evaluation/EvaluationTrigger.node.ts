@@ -8,12 +8,12 @@ import type {
 import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { loadOptions } from './methods';
-import { getGoogleSheet, getResults, getSheet } from './utils/evaluationTriggerUtils';
+import { getGoogleSheet, getResults, getRowsLeft, getSheet } from './utils/evaluationTriggerUtils';
 import { document, sheet } from '../Google/Sheet/GoogleSheetsTrigger.node';
 import { readFilter } from '../Google/Sheet/v2/actions/sheet/read.operation';
 import { authentication } from '../Google/Sheet/v2/actions/versionDescription';
 
-let startingRow = 2;
+let startingRow = 1;
 
 export class EvaluationTrigger implements INodeType {
 	description: INodeTypeDescription = {
@@ -87,6 +87,8 @@ export class EvaluationTrigger implements INodeType {
 	methods = { loadOptions };
 
 	async execute(this: IExecuteFunctions) {
+		const MAX_ROWS = 1000;
+
 		const workflowId = this.getWorkflow().id;
 
 		const workflowInfo: IExecuteWorkflowInfo = {};
@@ -94,8 +96,8 @@ export class EvaluationTrigger implements INodeType {
 
 		const maxRows = this.getNodeParameter('limitRows', 0)
 			? parseInt(this.getNodeParameter('maxRows', 0) as string)
-			: 1000;
-		const endingRow = startingRow + maxRows;
+			: MAX_ROWS;
+		const endingRow = startingRow + maxRows - 1;
 
 		const rangeOptions = {
 			rangeDefinition: 'specifyRange',
@@ -112,7 +114,7 @@ export class EvaluationTrigger implements INodeType {
 		operationResult = await getResults.call(
 			this,
 			operationResult,
-			1,
+			1, //  In order to preserve the header row, we need to set the startingRow to 1
 			endingRow,
 			googleSheetInstance,
 			googleSheet,
@@ -120,13 +122,20 @@ export class EvaluationTrigger implements INodeType {
 		);
 
 		if (operationResult.length === 0) {
-			startingRow = 1;
+			// startingRow = 1; // uncomment to prevent relooping
 			return [];
 		}
+
+		await getRowsLeft.call(
+			this,
+			googleSheetInstance,
+			googleSheet.title,
+			operationResult,
+			`${googleSheet.title}!${endingRow + 1}:${MAX_ROWS}`,
+		);
 
 		startingRow = endingRow + 1;
 
 		return [operationResult];
-		// TODO: Add hasLeft
 	}
 }

@@ -65,24 +65,22 @@ export async function getRowsLeft(
 	googleSheet: GoogleSheet,
 	sheetName: string,
 	operationResult: INodeExecutionData[],
+	rangeString: string,
 ) {
-	// TODO: Convert to function
-	// Doesn't totally work with limit
-	const entireSheet: INodeExecutionData[] = await readSheet.call(
+	const remainderSheet: INodeExecutionData[] = await readSheet.call(
 		this,
 		googleSheet,
 		sheetName,
 		0,
 		[],
-		5,
+		this.getNode().typeVersion,
 		[],
-		sheetName,
+		rangeString,
 	);
-	const rowsLeft = entireSheet.length - operationResult.length;
 
 	operationResult.push({
 		json: {
-			_rowsLeft: rowsLeft,
+			_rowsLeft: remainderSheet.length + 1, // Add 1 to account for the header row
 		},
 		pairedItems: [{ item: 0 }],
 	});
