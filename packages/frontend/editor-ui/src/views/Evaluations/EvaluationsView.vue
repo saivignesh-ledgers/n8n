@@ -30,7 +30,7 @@ const { isLoading } = useAsyncState(
 	},
 	[],
 	{
-		onError: (error) => toast.showError(error, locale.baseText('testDefinition.list.loadError')),
+		onError: (error) => toast.showError(error, locale.baseText('evaluation.list.loadError')),
 		shallow: false,
 	},
 );
@@ -80,17 +80,17 @@ const isRunTestEnabled = computed(() => !isRunning.value);
 						:class="$style.runTestButton"
 						size="small"
 						data-test-id="run-test-button"
-						:label="locale.baseText('testDefinition.runTest')"
+						:label="locale.baseText('evaluation.runTest')"
 						type="primary"
 						@click="runTest"
 					/>
 					<template #content>
 						<!-- <template v-if="fieldsIssues.length > 0">
-							<div>{{ locale.baseText('testDefinition.completeConfig') }}</div>
+							<div>{{ locale.baseText('evaluation.completeConfig') }}</div>
 							<div v-for="issue in fieldsIssues" :key="issue.field">- {{ issue.message }}</div>
 						</template> -->
 						<template v-if="isRunning">
-							{{ locale.baseText('testDefinition.testIsRunning') }}
+							{{ locale.baseText('evaluation.testIsRunning') }}
 						</template>
 					</template>
 				</N8nTooltip>
