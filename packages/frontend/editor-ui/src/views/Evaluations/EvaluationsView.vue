@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router';
 
 import RunsSection from '@/components/Evaluations/EditDefinition/sections/RunsSection.vue';
 import { useEvaluationStore } from '@/stores/evaluation.store.ee';
+import { useWorkflowsStore } from '@/stores/workflows.store';
 import { N8nButton, N8nText } from '@n8n/design-system';
 import { useAsyncState } from '@vueuse/core';
 import { orderBy } from 'lodash-es';
@@ -17,12 +18,13 @@ const props = defineProps<{
 const router = useRouter();
 const locale = useI18n();
 const toast = useToast();
-const testDefinitionStore = useEvaluationStore();
+const evaluationsStore = useEvaluationStore();
+const workflowsStore = useWorkflowsStore();
 // const telemetry = useTelemetry();
 
 const { isLoading } = useAsyncState(
 	async () => {
-		await testDefinitionStore.fetchTestRuns(props.workflowId);
+		await evaluationsStore.fetchTestRuns(props.workflowId);
 
 		return [];
 	},
@@ -34,7 +36,8 @@ const { isLoading } = useAsyncState(
 );
 
 const hasRuns = computed(() => runs.value.length > 0);
-const fieldsIssues = computed(() => testDefinitionStore.getFieldIssues(props.workflowId) ?? []);
+const fieldsIssues = computed(() => evaluationsStore.getFieldIssues(props.workflowId) ?? []);
+const workflowName = computed(() => workflowsStore.getWorkflowById(props.workflowId)?.name ?? '');
 
 const showConfig = ref(true);
 const selectedMetric = ref<string>('');
@@ -44,12 +47,12 @@ function getFieldIssues(key: string) {
 }
 
 async function runTest() {
-	await testDefinitionStore.startTestRun(props.workflowId);
-	await testDefinitionStore.fetchTestRuns(props.workflowId);
+	await evaluationsStore.startTestRun(props.workflowId);
+	await evaluationsStore.fetchTestRuns(props.workflowId);
 }
 
 const runs = computed(() => {
-	const testRuns = Object.values(testDefinitionStore.testRunsById ?? {}).filter(
+	const testRuns = Object.values(evaluationsStore.testRunsById ?? {}).filter(
 		({ workflowId }) => workflowId === props.workflowId,
 	);
 
@@ -66,7 +69,9 @@ const isRunTestEnabled = computed(() => !isRunning.value);
 	<div v-if="!isLoading" :class="[$style.container]">
 		<div :class="$style.header">
 			<div style="display: flex; align-items: center">
-				<N8nText bold size="xlarge" color="text-dark">TODO: Replace Caption</N8nText>
+				<N8nText bold size="xlarge" color="text-dark"
+					>Evaluation runs for: {{ workflowName }}</N8nText
+				>
 			</div>
 			<div style="display: flex; align-items: center; gap: 10px">
 				<N8nTooltip :disabled="isRunTestEnabled" :placement="'left'">
